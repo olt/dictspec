@@ -126,7 +126,7 @@ class TestRecursive(object):
     @raises(SpecError)
     def test_without_spec(self):
         spec = {'a': recursive()}
-        validate(spec, {'a': {'a'}})
+        validate(spec, {'a': {'a': {}}})
 
 class TestTypeSpec(object):
     def test(self):
