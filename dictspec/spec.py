@@ -17,7 +17,8 @@ class one_off(object):
 
 class number(object):
     def compare_type(self, data):
-        return isinstance(data, (float, int, long))
+        # True/False are also instances of int, exclude them
+        return isinstance(data, (float, int, long)) and not isinstance(data, bool)
 
 class type_spec(object):
     def __init__(self, type_key, specs):
