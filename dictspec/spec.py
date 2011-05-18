@@ -15,6 +15,12 @@ class one_off(object):
     def __init__(self, *specs):
         self.specs = specs
 
+def combined(*dicts):
+    result = {}
+    for d in dicts:
+        result.update(d)
+    return result
+
 class number(object):
     def compare_type(self, data):
         # True/False are also instances of int, exclude them
