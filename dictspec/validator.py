@@ -1,4 +1,4 @@
-from dictspec.spec import required, one_off, anything, recursive
+from .spec import required, one_off, anything, recursive
 from contextlib import contextmanager
 
 class Context(object):

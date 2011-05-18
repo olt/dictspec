@@ -1,5 +1,7 @@
-from dictspec.validator import validate, ValidationError
-from dictspec.spec import required, one_off, number, recursive, type_spec
+from __future__ import absolute_import
+
+from ..validator import validate, ValidationError
+from ..spec import required, one_off, number, recursive, type_spec
 
 from nose.tools import raises
 
