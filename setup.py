@@ -6,7 +6,7 @@ setup(
     name = "dictspec",
     version = dictspec.__version__,
     description='validator for JSON/YAML/dict data',
-    long_description=open('README').read() + open('CHANGES').read(),
+    long_description=open('README.md').read(),
     author = "Oliver Tonnhofer",
     author_email = "olt@omniscale.de",
     url='http://github.org/olt/dictspec/',
