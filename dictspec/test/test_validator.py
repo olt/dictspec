@@ -100,3 +100,22 @@ class TestTypeSpec(object):
         spec = type_spec('type', {'foo': {'alpha': str()}, 'bar': {'one': 1, 'two': str()}})
         validate(spec, {'type': 'foo', 'alpha': 'yes'})
         validate(spec, {'type': 'bar', 'one': 2})
+
+class TestErrors(object):
+    def test_invalid_key(self):
+        spec = {'world': {'europe': {}}}
+        try:
+            validate(spec, {'world': {'europe': {'germany': 1}}})
+        except ValueError, ex:
+            assert 'world.europe' in str(ex)
+        else:
+            assert False
+    
+    def test_invalid_list_item(self):
+        spec = {'numbers': [number()]}
+        try:
+            validate(spec, {'numbers': [1, 2, 3, 'foo']})
+        except ValueError, ex:
+            assert 'numbers[3]' in str(ex), str(ex)
+        else:
+            assert False
