@@ -20,7 +20,7 @@ class Context(object):
     
     @property
     def current_pos(self):
-        return ''.join(self.obj_pos).lstrip('.')
+        return ''.join(self.obj_pos).lstrip('.') or '.'
 
 def validate(spec, data):
     return Validator(spec).validate(data)
@@ -45,14 +45,17 @@ class Validator(object):
         
         if self.errors:
             if len(self.errors) == 1:
-                raise ValidationError(self.errors[0])
+                raise ValidationError(self.errors[0], self.errors)
             else:
                 raise ValidationError('found %d validation errors.' % len(self.errors), self.errors)
             
 
     def _validate_part(self, spec, data):
         if hasattr(spec, 'subspec'):
-            spec = spec.subspec(data)
+            try:
+                spec = spec.subspec(data, self.context)
+            except ValueError, ex:
+                return self._handle_error(str(ex))
     
         # store spec for recursive specs in context
         if isinstance(spec, recursive):
@@ -77,6 +80,8 @@ class Validator(object):
             if not spec.compare_type(data):
                 return self._handle_error("'%s' in %s not of type %s" %
                     (data, self.context.current_pos, type(spec)))
+        elif data is None:
+            data = {}
         elif not isinstance(data, type(spec)):
             return self._handle_error("'%s' in %s not of type %s" %
                 (data, self.context.current_pos, type(spec)))
