@@ -22,17 +22,33 @@ class Context(object):
     def current_pos(self):
         return ''.join(self.obj_pos).lstrip('.')
 
-
 def validate(spec, data):
     return Validator(spec).validate(data)
 
+class ValidationError(TypeError):
+    def __init__(self, msg, errors=None):
+        TypeError.__init__(self, msg)
+        self.errors = errors or []
+
 class Validator(object):
-    def __init__(self, spec):
+    def __init__(self, spec, fail_fast=False):
+        """
+        :params fail_fast: True if it should raise on the first error
+        """
         self.context = Context()
         self.complete_spec = spec
-    
+        self.raise_first_error = fail_fast
+        self.errors = []
+        
     def validate(self, data):
-        return self._validate_part(self.complete_spec, data)
+        self._validate_part(self.complete_spec, data)
+        
+        if self.errors:
+            if len(self.errors) == 1:
+                raise ValidationError(self.errors[0])
+            else:
+                raise ValidationError('found %d validation errors.' % len(self.errors), self.errors)
+            
 
     def _validate_part(self, spec, data):
         if hasattr(spec, 'subspec'):
@@ -55,12 +71,15 @@ class Validator(object):
                     spec = subspec
                     break
             else:
-                raise ValueError("'%s' in %s not of any type %r" % (data, self.context.current_pos, map(type, spec.specs)))
+                return self._handle_error("'%s' in %s not of any type %r" %
+                    (data, self.context.current_pos, map(type, spec.specs)))
         elif hasattr(spec, 'compare_type'):
             if not spec.compare_type(data):
-                raise ValueError("'%s' in %s not of type %s" % (data, self.context.current_pos, type(spec)))
+                return self._handle_error("'%s' in %s not of type %s" %
+                    (data, self.context.current_pos, type(spec)))
         elif not isinstance(data, type(spec)):
-            raise ValueError("'%s' in %s not of type %s" % (data, self.context.current_pos, type(spec)))
+            return self._handle_error("'%s' in %s not of type %s" %
+                (data, self.context.current_pos, type(spec)))
     
         # recurse in dicts and lists
         if isinstance(spec, dict):
@@ -74,7 +93,8 @@ class Validator(object):
         for k in spec.iterkeys():
             if isinstance(k, required):
                 if k not in data:
-                    raise ValueError("missing '%s' not in %s" % (k, self.context.current_pos))
+                    self._handle_error("missing '%s' not in %s" %
+                        (k, self.context.current_pos))
             if isinstance(k, anything):
                 accept_any_key = True
                 any_key_spec = spec[k]
@@ -86,7 +106,9 @@ class Validator(object):
 
             else:
                 if k not in spec:
-                    raise ValueError("unknown '%s' in %s" % (k, self.context.current_pos))
+                    self._handle_error("unknown '%s' in %s" %
+                        (k, self.context.current_pos))
+                    continue
                 with self.context.pos('.' + k):
                     self._validate_part(spec[k], v)
 
@@ -95,4 +117,9 @@ class Validator(object):
         for i, v in enumerate(data):
             with self.context.pos('[%d]' % i):
                 self._validate_part(spec[0], v)
+    
+    def _handle_error(self, msg):
+        if self.raise_first_error:
+            raise ValidationError(msg)
+        self.errors.append(msg)
         

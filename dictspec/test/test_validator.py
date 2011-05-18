@@ -1,4 +1,4 @@
-from dictspec.validator import validate
+from dictspec.validator import validate, ValidationError
 from dictspec.spec import required, one_off, number, recursive, type_spec
 
 from nose.tools import raises
@@ -8,7 +8,7 @@ class TestSimpleDict(object):
         spec = {'hello': 1, 'world': True}
         validate(spec, {'hello': 34, 'world': False})
 
-    @raises(ValueError)
+    @raises(ValidationError)
     def test_invalid_key(self):
         spec = {'world': True}
         validate(spec, {'world_foo': False})
@@ -17,12 +17,12 @@ class TestSimpleDict(object):
         spec = {'world': 1}
         validate(spec, {})
 
-    @raises(ValueError)
+    @raises(ValidationError)
     def test_invalid_value(self):
         spec = {'world': 1}
         validate(spec, {'world_foo': False})
 
-    @raises(ValueError)
+    @raises(ValidationError)
     def test_missing_required_key(self):
         spec = {required('world'): 1}
         validate(spec, {})
@@ -32,7 +32,7 @@ class TestSimpleDict(object):
         validate(spec, {'hello': 129})
         validate(spec, {'hello': True})
     
-    @raises(ValueError)
+    @raises(ValidationError)
     def test_invalid_one_off(self):
         spec = {'hello': one_off(1, False)}
         validate(spec, {'hello': []})
@@ -46,7 +46,7 @@ class TestLists(object):
         spec = [1]
         validate(spec, [])
     
-    @raises(ValueError)
+    @raises(ValidationError)
     def test_invalid_item(self):
         spec = [1]
         validate(spec, [1, 'hello'])
@@ -64,7 +64,7 @@ class TestNested(object):
     def check_valid(self, spec, data):
         validate(spec, data)
     
-    @raises(ValueError)
+    @raises(ValidationError)
     def check_invalid(self, spec, data):
         validate(spec, data)
         
@@ -106,7 +106,7 @@ class TestErrors(object):
         spec = {'world': {'europe': {}}}
         try:
             validate(spec, {'world': {'europe': {'germany': 1}}})
-        except ValueError, ex:
+        except ValidationError, ex:
             assert 'world.europe' in str(ex)
         else:
             assert False
@@ -115,7 +115,18 @@ class TestErrors(object):
         spec = {'numbers': [number()]}
         try:
             validate(spec, {'numbers': [1, 2, 3, 'foo']})
-        except ValueError, ex:
+        except ValidationError, ex:
             assert 'numbers[3]' in str(ex), str(ex)
+        else:
+            assert False
+
+    def test_multiple_invalid_list_items(self):
+        spec = {'numbers': [number()]}
+        try:
+            validate(spec, {'numbers': [1, True, 3, 'foo']})
+        except ValidationError, ex:
+            assert '2 validation errors' in str(ex), str(ex)
+            assert 'numbers[1]' in ex.errors[0]
+            assert 'numbers[3]' in ex.errors[1]
         else:
             assert False
