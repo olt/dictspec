@@ -20,7 +20,7 @@
 
 from __future__ import absolute_import
 
-from ..validator import validate, ValidationError
+from ..validator import validate, ValidationError, SpecError
 from ..spec import required, one_off, number, recursive, type_spec
 
 from nose.tools import raises
@@ -117,6 +117,16 @@ class TestRecursive(object):
         spec = recursive({'hello': str(), 'more': recursive()})
         validate(spec, {'hello': 'world', 'more': {'hello': 'foo', 'more': {'more': {}}}})
 
+    def test_multiple(self):
+        spec = {'a': recursive({'hello': str(), 'more': recursive()}), 'b': recursive({'foo': recursive()})}
+        validate(spec, {'b': {'foo': {'foo': {}}}})
+        validate(spec, {'a': {'hello': 'world', 'more': {'hello': 'foo', 'more': {'more': {}}}}})
+        validate(spec, {'b': {'foo': {'foo': {}}},
+                        'a': {'hello': 'world', 'more': {'hello': 'foo', 'more': {'more': {}}}}})
+    @raises(SpecError)
+    def test_without_spec(self):
+        spec = {'a': recursive()}
+        validate(spec, {'a': {'a'}})
 
 class TestTypeSpec(object):
     def test(self):

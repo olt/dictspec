@@ -53,6 +53,9 @@ class ValidationError(TypeError):
         TypeError.__init__(self, msg)
         self.errors = errors or []
 
+class SpecError(TypeError):
+    pass
+
 class Validator(object):
     def __init__(self, spec, fail_fast=False):
         """
@@ -80,11 +83,16 @@ class Validator(object):
             except ValueError, ex:
                 return self._handle_error(str(ex))
     
-        # store spec for recursive specs in context
         if isinstance(spec, recursive):
-            if not self.context.recurse_spec:
+            if spec.spec:
                 self.context.recurse_spec = spec.spec
-            spec = self.context.recurse_spec
+                self._validate_part(spec.spec, data)
+                self.context.recurse_spec = None
+                return
+            else:
+                spec = self.context.recurse_spec
+                if spec is None:
+                    raise SpecError('found recursive() outside recursive spec')
     
         if isinstance(spec, anything):
             return
@@ -141,7 +149,8 @@ class Validator(object):
                     self._validate_part(spec[k], v)
 
     def _validate_list(self, spec, data):
-        assert len(spec) == 1
+        if not len(spec) == 1:
+            raise SpecError('lists support only one type, got: %s' % spec)
         for i, v in enumerate(data):
             with self.context.pos('[%d]' % i):
                 self._validate_part(spec[0], v)
