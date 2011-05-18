@@ -105,16 +105,16 @@ class Validator(object):
                     spec = subspec
                     break
             else:
-                return self._handle_error("'%s' in %s not of any type %r" %
+                return self._handle_error("%r in %s not of any type %r" %
                     (data, self.context.current_pos, map(type, spec.specs)))
         elif hasattr(spec, 'compare_type'):
             if not spec.compare_type(data):
-                return self._handle_error("'%s' in %s not of type %s" %
+                return self._handle_error("%r in %s not of type %s" %
                     (data, self.context.current_pos, type(spec)))
         elif data is None:
             data = {}
         elif not isinstance(data, type(spec)):
-            return self._handle_error("'%s' in %s not of type %s" %
+            return self._handle_error("%r in %s not of type %s" %
                 (data, self.context.current_pos, type(spec)))
     
         # recurse in dicts and lists
