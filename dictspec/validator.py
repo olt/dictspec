@@ -49,8 +49,9 @@ def validate(spec, data):
     return Validator(spec).validate(data)
 
 class ValidationError(TypeError):
-    def __init__(self, msg, errors=None):
+    def __init__(self, msg, errors=None, informal_only=False):
         TypeError.__init__(self, msg)
+        self.informal_only = informal_only
         self.errors = errors or []
 
 class SpecError(TypeError):
@@ -64,16 +65,18 @@ class Validator(object):
         self.context = Context()
         self.complete_spec = spec
         self.raise_first_error = fail_fast
-        self.errors = []
+        self.errors = False
+        self.messages = []
         
     def validate(self, data):
         self._validate_part(self.complete_spec, data)
         
-        if self.errors:
-            if len(self.errors) == 1:
-                raise ValidationError(self.errors[0], self.errors)
+        if self.messages:
+            if len(self.messages) == 1:
+                raise ValidationError(self.messages[0], self.messages, informal_only=not self.errors)
             else:
-                raise ValidationError('found %d validation errors.' % len(self.errors), self.errors)
+                raise ValidationError('found %d validation errors.' % len(self.messages), self.messages,
+                    informal_only=not self.errors)
             
 
     def _validate_part(self, spec, data):
@@ -143,7 +146,7 @@ class Validator(object):
             else:
                 if k not in spec:
                     self._handle_error("unknown '%s' in %s" %
-                        (k, self.context.current_pos))
+                        (k, self.context.current_pos), info_only=True)
                     continue
                 with self.context.pos('.' + k):
                     self._validate_part(spec[k], v)
@@ -155,8 +158,10 @@ class Validator(object):
             with self.context.pos('[%d]' % i):
                 self._validate_part(spec[0], v)
     
-    def _handle_error(self, msg):
-        if self.raise_first_error:
+    def _handle_error(self, msg, info_only=False):
+        if not info_only:
+            self.errors = True
+        if self.raise_first_error and not info_only:
             raise ValidationError(msg)
-        self.errors.append(msg)
+        self.messages.append(msg)
         
