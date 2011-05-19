@@ -20,8 +20,10 @@
 
 from __future__ import with_statement
 
-from .spec import required, one_off, anything, recursive
+import re
 from contextlib import contextmanager
+
+from .spec import required, one_off, anything, recursive
 
 class Context(object):
     def __init__(self):
@@ -111,11 +113,11 @@ class Validator(object):
                     spec = subspec
                     break
             else:
-                return self._handle_error("%r in %s not of any type %r" %
-                    (data, self.context.current_pos, map(type, spec.specs)))
+                return self._handle_error("%r in %s not of any type %s" %
+                    (data, self.context.current_pos, ', '.join(map(type_str, spec.specs))))
         elif not type_matches(spec, data):
             return self._handle_error("%r in %s not of type %s" %
-                (data, self.context.current_pos, type(spec)))
+                (data, self.context.current_pos, type_str(spec)))
     
         # recurse in dicts and lists
         if isinstance(spec, dict):
@@ -161,6 +163,20 @@ class Validator(object):
         if self.raise_first_error and not info_only:
             raise ValidationError(msg)
         self.messages.append(msg)
+
+def type_str(spec):
+    if not isinstance(spec, type):
+        spec = type(spec)
+
+    match = re.match("<type '(\w+)'>", str(spec))
+    if match:
+        return match.group(1)
+
+    match = re.match("<class '([\w._]+)'>", str(spec))
+    if match:
+        return match.group(1).split('.')[-1]
+
+    return str(type)
 
 def type_matches(spec, data):
     if hasattr(spec, 'compare_type'):

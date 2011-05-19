@@ -39,7 +39,7 @@ Use more complex specs and get detailed errors:
     ...   validate(spec, data)
     ... except ValidationError, ex:
     ...   print ex.errors
-    ["missing 'foo' not in .", "unknown 'baz' in .", "4 in bar not of type <type 'bool'>"]
+    ["missing 'foo' not in .", "unknown 'baz' in .", '4 in bar not of type bool']
 
 
 Also with recursion and arbitrary keys:
