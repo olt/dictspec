@@ -79,7 +79,6 @@ class Validator(object):
             else:
                 raise ValidationError('found %d validation errors.' % len(self.messages), self.messages,
                     informal_only=not self.errors)
-            
 
     def _validate_part(self, spec, data):
         if hasattr(spec, 'subspec'):
@@ -87,7 +86,7 @@ class Validator(object):
                 spec = spec.subspec(data, self.context)
             except ValueError, ex:
                 return self._handle_error(str(ex))
-    
+
         if isinstance(spec, recursive):
             if spec.spec:
                 self.context.recurse_spec = spec.spec
@@ -98,27 +97,23 @@ class Validator(object):
                 spec = self.context.recurse_spec
                 if spec is None:
                     raise SpecError('found recursive() outside recursive spec')
-    
+
         if isinstance(spec, anything):
             return
-    
+
+        if data is None:
+            data = {}
+
         if isinstance(spec, one_off):
             # check if at least one spec type matches
             for subspec in spec.specs:
-                if (hasattr(subspec, 'compare_type') and subspec.compare_type(data)
-                    or isinstance(data, type(subspec))):
+                if type_matches(subspec, data):
                     spec = subspec
                     break
             else:
                 return self._handle_error("%r in %s not of any type %r" %
                     (data, self.context.current_pos, map(type, spec.specs)))
-        elif hasattr(spec, 'compare_type'):
-            if not spec.compare_type(data):
-                return self._handle_error("%r in %s not of type %s" %
-                    (data, self.context.current_pos, type(spec)))
-        elif data is None:
-            data = {}
-        elif not isinstance(data, type(spec)):
+        elif not type_matches(spec, data):
             return self._handle_error("%r in %s not of type %s" %
                 (data, self.context.current_pos, type(spec)))
     
@@ -166,4 +161,13 @@ class Validator(object):
         if self.raise_first_error and not info_only:
             raise ValidationError(msg)
         self.messages.append(msg)
-        
+
+def type_matches(spec, data):
+    if hasattr(spec, 'compare_type'):
+        return spec.compare_type(data)
+    if isinstance(spec, type):
+        spec_type = spec
+    else:
+        spec_type = type(spec)
+    return isinstance(data, spec_type)
+

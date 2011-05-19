@@ -1,3 +1,4 @@
+# -:- encoding: utf8 -:-
 # Copyright (c) 2011, Oliver Tonnhofer <olt@omniscale.de>
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -58,6 +59,11 @@ class TestSimpleDict(object):
     def test_invalid_one_off(self):
         spec = {'hello': one_off(1, False)}
         validate(spec, {'hello': []})
+
+    def test_instances_and_types(self):
+        spec = {'str()': str(), 'basestring': basestring, 'int': int, 'int()': int()}
+        validate(spec, {'str()': 'str', 'basestring': u'☃', 'int': 1, 'int()': 1})
+
 
 class TestLists(object):
     def test_list(self):
