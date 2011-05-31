@@ -4,18 +4,20 @@ dictspec – Validator for JSON/YAML/dicts
 dictspec is a simple Python library that validates dictionary and list based data structures.
 You can use it to validate JSON/YAML documents against your own specification.
 
+It is MIT licensed and uses relative imports, so you can just drop it into your project.
+
 Examples
 --------
 
-Validate against plain Python data types:
+Validate against plain Python data objects or types:
 
     >>> spec = {
     ...   'foo': 1,
-    ...   'bar': [str()],
+    ...   'bar': [basestring],
     ... }
     >>> data = {
     ...   'foo': 4,
-    ...   'bar': ['hello', 'world']}
+    ...   'bar': ['hello', u'w\x00F6rld']}
     ... }
     >>> from dictspec.validator import validate
     >>> validate(spec, data)
