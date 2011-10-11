@@ -24,7 +24,7 @@ from __future__ import absolute_import
 import unittest
 
 from ..validator import validate, ValidationError, SpecError
-from ..spec import required, one_off, number, recursive, type_spec
+from ..spec import required, one_off, number, recursive, type_spec, anything
 
 
 def raises(exception):
@@ -196,5 +196,15 @@ class TestErrors(unittest.TestCase):
         else:
             assert False
 
+    def test_error_in_non_string_key(self):
+        spec = {anything(): bool()}
+        try:
+            validate(spec, {1: 'not a bool'})
+        except ValidationError, ex:
+            assert "'not a bool' in 1 not of type bool" in ex.errors[0]
+        else:
+            assert False
+
 if __name__ == '__main__':
     unittest.main()
+
