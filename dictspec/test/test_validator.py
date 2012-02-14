@@ -24,7 +24,7 @@ from __future__ import absolute_import
 import unittest
 
 from ..validator import validate, ValidationError, SpecError
-from ..spec import required, one_off, number, recursive, type_spec, anything
+from ..spec import required, one_of, number, recursive, type_spec, anything
 
 
 def raises(exception):
@@ -62,14 +62,14 @@ class TestSimpleDict(unittest.TestCase):
         spec = {required('world'): 1}
         validate(spec, {})
     
-    def test_valid_one_off(self):
-        spec = {'hello': one_off(1, bool())}
+    def test_valid_one_of(self):
+        spec = {'hello': one_of(1, bool())}
         validate(spec, {'hello': 129})
         validate(spec, {'hello': True})
     
     @raises(ValidationError)
-    def test_invalid_one_off(self):
-        spec = {'hello': one_off(1, False)}
+    def test_invalid_one_of(self):
+        spec = {'hello': one_of(1, False)}
         validate(spec, {'hello': []})
 
     def test_instances_and_types(self):
