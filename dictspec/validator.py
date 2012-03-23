@@ -110,8 +110,8 @@ class Validator(object):
             # check if at least one spec type matches
             for subspec in spec.specs:
                 if type_matches(subspec, data):
-                    spec = subspec
-                    break
+                    self._validate_part(subspec, data)
+                    return
             else:
                 return self._handle_error("%r in %s not of any type %s" %
                     (data, self.context.current_pos, ', '.join(map(type_str, spec.specs))))

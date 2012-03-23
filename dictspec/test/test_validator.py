@@ -214,6 +214,19 @@ class TestErrors(unittest.TestCase):
         else:
             assert False
 
+def test_one_of_with_custom_types():
+    # test for fixed validation of one_of specs with values that are
+    # not lists or dicts (e.g. recursive)
+    spec = one_of([str], recursive({required('foo'): basestring}))
+    validate(spec, ['foo', 'bar'])
+    validate(spec, {'foo': 'bar'})
+    try:
+        validate(spec, {'nofoo': 'bar'})
+    except ValidationError, ex:
+        assert "missing 'foo'" in ex.errors[0]
+    else:
+        assert False
+
 if __name__ == '__main__':
     unittest.main()
 
