@@ -1,15 +1,15 @@
 # Copyright (c) 2011, Oliver Tonnhofer <olt@omniscale.de>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -17,6 +17,16 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+
+from __future__ import absolute_import
+from .compat import itervalues
+
+import sys
+
+if sys.version_info[0] == 2:
+    number_types = (float, int, long)
+else:
+    number_types = (float, int)
 
 class required(str):
     """
@@ -37,7 +47,7 @@ class anything(object):
 class recursive(object):
     """
     Recursive types.
-    
+
     >>> from .validator import validate
     >>> spec = recursive({'foo': recursive()})
     >>> validate(spec, {'foo': {'foo': {'foo':{}}}})
@@ -64,7 +74,7 @@ one_off = one_of
 def combined(*dicts):
     """
     Combine multiple dicts.
-    
+
     >>> (combined({'a': 'foo'}, {'b': 'bar'})
     ...  == {'a': 'foo', 'b': 'bar'})
     True
@@ -81,24 +91,27 @@ class number(object):
     >>> from .validator import validate
     >>> validate(number(), 1)
     >>> validate(number(), -32.0)
-    >>> validate(number(), 99999999999999L)
+    >>> validate(number(), 99999999999999)
     """
     def compare_type(self, data):
         # True/False are also instances of int, exclude them
-        return isinstance(data, (float, int, long)) and not isinstance(data, bool)
+        return isinstance(data, number_types) and not isinstance(data, bool)
 
 class type_spec(object):
     def __init__(self, type_key, specs):
         self.type_key = type_key
         self.specs = specs
 
-        for v in specs.itervalues():
+        for v in itervalues(specs):
             if not isinstance(v, dict):
                 raise ValueError('%s requires dict subspecs', self.__class__)
             if self.type_key not in v:
                 v[self.type_key] = str()
 
     def subspec(self, data, context):
+        if not data:
+            raise ValueError("%s is empty" % (context.current_pos, ))
+
         if self.type_key not in data:
             raise ValueError("'%s' not in %s" % (self.type_key, context.current_pos))
         key = data[self.type_key]
